@@ -101,6 +101,14 @@ class Renderer:
             self.live.stop()
             self._started = False
 
+    def set_session_info(self, session_id: Optional[str] = None, submission_id: Optional[str] = None):
+        """Update session/submission identifiers and refresh UI."""
+        if session_id is not None:
+            self.state.session_id = session_id
+        if submission_id is not None:
+            self.state.submission_id = submission_id
+        self._refresh()
+
     def _should_render(self) -> bool:
         """Check if enough time has passed since last render (throttling)."""
         now = time.time() * 1000  # milliseconds
@@ -305,6 +313,36 @@ class Renderer:
             self.console.print(f"[dim]{time.strftime('%H:%M:%S')}[/dim] {message}")
         else:
             self.console.print(f"[dim]{time.strftime('%H:%M:%S')}[/dim] {message}")
+
+    def confirm(self, message: str, default: bool = True) -> bool:
+        """
+        Display a confirmation prompt to the user.
+
+        Temporarily stops the Live context to allow interactive input,
+        then restarts it after receiving the user's response.
+
+        Args:
+            message: The confirmation message to display
+            default: The default answer if user just presses Enter
+
+        Returns:
+            True if user confirms, False otherwise
+        """
+        from rich.prompt import Confirm
+
+        # Temporarily stop the Live context to allow input
+        was_started = self._started
+        if self.live and was_started:
+            self.live.stop()
+
+        try:
+            # Get user confirmation
+            result = Confirm.ask(message, default=default, console=self.console)
+            return result
+        finally:
+            # Restart the Live context
+            if self.live and was_started:
+                self.live.start()
 
     def set_server_status(self, game: str, status: ServerStatus):
         """Update a game server's status."""

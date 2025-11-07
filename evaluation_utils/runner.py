@@ -3,13 +3,13 @@ import os
 import time
 import json
 import backoff
-from rich.prompt import Confirm
 
 # from evaluation_utils.sessions import Session
 from evaluation_utils.game_env import GameEnv
 from evaluation_utils.commons import GAME_SERVER_PORTS, GAME_DATA_DIR
 from evaluation_utils.game_server_launcher import GameLauncher
 from evaluation_utils.renderer import Renderer
+from evaluation_utils.sessions import Session
 
 from agents.config import PokemonAgent, TwentyFourtyEightAgent, SuperMarioAgent, StarCraftAgent
 
@@ -33,7 +33,7 @@ class Runner:
             self.game_launcher = GameLauncher(renderer)
         else:
             self.renderer.event("Running in REMOTE mode")
-            self.session = Session(session_id=session_id)
+            self.session = Session(session_id=session_id, renderer=self.renderer)
 
             session_dir = os.path.join(os.getcwd(), ".aicrowd")
             session_file = os.path.join(session_dir, "session_id")
@@ -49,10 +49,9 @@ class Runner:
                     previous_session_id = ""
 
                 if previous_session_id:
-                    if Confirm.ask(
+                    if self.renderer.confirm(
                         f"Found previous session [bold]{previous_session_id}[/bold]. Continue it?",
-                        default=True,
-                        console=self.renderer.console if self.renderer else None
+                        default=True
                     ):
                         self.renderer.event(f"Continuing previous session: {previous_session_id}")
                         self.session.session_id = previous_session_id
@@ -60,7 +59,7 @@ class Runner:
                         # Stop previous session before creating a new one
                         self.renderer.event(f"Stopping previous session: {previous_session_id}")
                         try:
-                            temp = Session(previous_session_id)
+                            temp = Session(previous_session_id, renderer=self.renderer)
                             temp.stop()
                         except Exception:
                             pass
@@ -104,12 +103,13 @@ class Runner:
                 self.renderer.event("Stopping all game servers...")
                 self.game_launcher.force_stop_all_games()
 
-    @backoff.on_exception(backoff.constant, Exception, max_time=30, max_tries=30, interval=1)
+    @backoff.on_exception(backoff.constant, Exception, max_time=180, max_tries=60, interval=3)
     async def wait_for_client_connect(self, env: GameEnv):
         async with env.client:
             await env.wait_for_ping()
 
     async def start_game(self, game_name: str):
+        self.renderer.set_server_status(game_name, "launching")
         game_display_name = game_name.replace("_", " ").title()
 
         self.renderer.event(f"{game_display_name}: Initializing agent")
