@@ -164,8 +164,8 @@ class Runner:
                     self.renderer.update_game_progress(game_name, current_score)
 
                     # Log every 10 iterations or on score changes
-                    if iteration % 10 == 0 or (iteration > 1 and current_score != self.scores.get(game_name, 0)):
-                        self.renderer.event(f"{game_display_name}: Iteration {iteration}, Score: {current_score}")
+                    # if iteration % 10 == 0 or (iteration > 1 and current_score != self.scores.get(game_name, 0)):
+                    self.renderer.event(f"{game_display_name}: Iteration {iteration}, Score: {current_score}")
 
                     if finished:
                         self.scores[game_name] = current_score
