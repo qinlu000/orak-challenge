@@ -1,4 +1,4 @@
-class RandomAgent:
+class RandomPokemonAgent:
     def __init__(self):
         pass
     

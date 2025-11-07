@@ -1,3 +1,9 @@
-from agents.random import RandomAgent
+from agents.random_mario import RandomMarioAgent
+from agents.random_pokemon import RandomPokemonAgent
+from agents.random_twenty_fourty_eight import RandomTwentyFourtyEightAgent
+from agents.random_starcraft import RandomStarCraftAgent
 
-UserAgent = RandomAgent
+PokemonAgent = RandomPokemonAgent
+TwentyFourtyEightAgent = RandomTwentyFourtyEightAgent
+SuperMarioAgent = RandomMarioAgent
+StarCraftAgent = RandomStarCraftAgent

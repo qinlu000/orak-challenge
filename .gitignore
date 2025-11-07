@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .aicrowd
+game_logs/
+executables/pokemon_red/pyboy/pokered.gbc
+executables/streetfighter3/roms/sfiii3n.zip
+.DS_Store
+.cursor/
+logs/
