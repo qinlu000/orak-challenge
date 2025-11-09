@@ -1,4 +1,4 @@
-[![banner image](https://images.aicrowd.com/raw_images/challenges/banner_file/1172/42336f374def51a8c31f.jpg)](https://www.aicrowd.com/challenges/orak-game-agent-challenge-2025)
+[![banner image](https://images.aicrowd.com/raw_images/challenges/social_media_image_file/1172/d7e88fdb24345bdbd026.jpg)](https://www.aicrowd.com/challenges/orak-game-agent-challenge-2025)
 [![Discord](https://img.shields.io/discord/565639094860775436.svg)](https://discord.gg/yWurtB2huX)
 
 # Orak Game Agent Challenge 2025 Starter Kit 🎮
