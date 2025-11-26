@@ -8,15 +8,16 @@ import logging
 import time
 import base64
 from io import BytesIO
+import traceback
 
 from mcp.server.fastmcp import FastMCP
 from mcp_game_servers.utils.module_creator import EnvCreator
 
-from evaluation_utils.commons import GAME_DATA_DIR, GAME_RESULTS_PATH, setup_logging
+from evaluation_utils.commons import GAME_DATA_DIR, GAME_RESULTS_PATH, setup_logging, MAX_STEPS, MAX_EPISODES
 
 logger = logging.getLogger(__name__)
 
-
+GAME_ID = os.getenv("GAME_ID", "")
 
 if sys.platform == 'win32':
     import msvcrt
@@ -54,6 +55,8 @@ class MCPGameServer:
         self._start_time = None
         self._end_time = None
         self._steps_times = []
+        self._episodes = 0
+        self._max_steps = MAX_STEPS[GAME_ID]
 
     def create_config(self, config_path: str, expand_log_path: bool):
         cfg = omegaconf.OmegaConf.load(config_path)
@@ -88,6 +91,7 @@ class MCPGameServer:
         with open(GAME_RESULTS_PATH, "w") as fp:
             json.dump({
                 "score": self._score,
+                "avg_score": self._score / self._episodes,
                 "start_time": self._start_time,
                 "end_time": self._end_time,
                 "steps_times": self._steps_times,
@@ -100,10 +104,25 @@ class MCPGameServer:
         logger.info(f"executing actions: {action}")
         self.obs, reward, terminated, truncated, info = self.env.step(action)
         score, done = self.env.evaluate(self.obs)
+        retries = 0
+        while score is None and retries < 30:
+            self.obs, reward, terminated, truncated, info = self.env.step(action)
+            score, done = self.env.evaluate(self.obs)
+            retries += 1
+            time.sleep(10)
+        if score is None:
+            raise Exception("Failed to get score, is the game running?")
         is_finished = terminated or truncated or done
         self._score += score
-        if len(self._steps_times) > 30:
+        if len(self._steps_times) >= self._max_steps:
             is_finished = True
+            self._episodes += 1
+        
+        if self._episodes < MAX_EPISODES:
+            # recreate game env for new episode
+            self.env = EnvCreator(self.cfg).create()
+            self.first_loading = True
+        
         return score, is_finished
 
     def register_tools(self):
@@ -135,14 +154,26 @@ class MCPGameServer:
 
         @self.mcp.tool(name="dispatch-final-action", description="Dispatch a client final action to the server and return score and termination flag")
         def dispatch_final_action(action_str: str) -> str:
-            score, is_finished = self.dispatch_action_and_get_score(action_str)
+            try:
+                score, is_finished = self.dispatch_action_and_get_score(action_str)
+            except Exception as e:
+                logger.error(traceback.format_exc())
+                raise e
             logger.info(f"dispatch_final_action result: {score}, {is_finished}")
             if is_finished:
                 self.log_game_results()
             return json.dumps({
                 "score": score,
-                "cumulative_score": self._score,
+                "avg_score": self._score / (self._episodes + 1),
                 "is_finished": is_finished
+            })
+        
+        @self.mcp.tool(name="get-game-config", description="Get the game config")
+        def get_game_config() -> str:
+            return json.dumps({
+                "game_id": GAME_ID,
+                "max_steps": self._max_steps,
+                "max_episodes": MAX_EPISODES
             })
 
     async def run(self):

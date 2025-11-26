@@ -46,11 +46,19 @@ API_TOKEN = os.getenv("AICROWD_API_TOKEN")
 
 BASE_URL = os.getenv("AICROWD_API_BASE_URL", "https://orak-game-api.aicrowd.com")
 
-BASE_PORT = random.randint(10000, 50000)
+BASE_PORT = int(os.getenv("BASE_PORT", random.randint(10000, 50000)))
 GAME_SERVER_PORTS = {
     "twenty_fourty_eight": BASE_PORT,
-    # "street_fighter": 33001,
     "super_mario": BASE_PORT + 1,
     "pokemon_red": BASE_PORT + 2,
-    # "star_craft": BASE_PORT + 3,
+    "star_craft": BASE_PORT + 3,
+    "street_fighter": BASE_PORT + 4,
+}
+MAX_EPISODES = 3
+MAX_STEPS = {
+    "twenty_fourty_eight": 1000,
+    "street_fighter": 1000,
+    "super_mario": 100,
+    "pokemon_red": 200,
+    "star_craft": 1000,
 }

@@ -17,13 +17,17 @@ from .utils.bots import sc2_run_game
 from .utils.actions import ActionDescriptions
 
 LADDER_MAP_2023 = [
-    'Altitude LE',
-    'Ancient Cistern LE',
-    'Babylon LE',
-    'Dragon Scales LE',
-    'Gresvan LE',
-    'Neohumanity LE',
-    'Royal Blood LE'
+    # 'Altitude LE',
+    # 'Ancient Cistern LE',
+    # 'Babylon LE',
+    # 'Dragon Scales LE',
+    # 'Gresvan LE',
+    # 'Neohumanity LE',
+    # 'Royal Blood LE',
+    # 'Abyssal Reef LE',
+    "Ancient Cistern LIE",
+    "LastFantasyAIE",
+    'Flat64'
 ]
 
 def wait_for_window(window_name: str, timeout: int = 30, interval: float = 1.0) -> WindowCapture:

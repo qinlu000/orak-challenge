@@ -62,6 +62,7 @@ class GameLauncher:
         env["PORT"] = str(GAME_SERVER_PORTS[game_name])
         env["GAME_DATA_DIR"] = game_data_dir
         env["PYTHONPATH"] = os.path.join(app_dir, "evaluation_utils") + os.pathsep + app_dir
+        env["GAME_ID"] = game_name
 
         log_file_path = os.path.join(game_data_dir, "game_server.log")
         self.output_files[game_name] = open(log_file_path, "w")

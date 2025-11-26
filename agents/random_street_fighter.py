@@ -1,6 +1,6 @@
-class RandomTwentyFourtyEightAgent:
+class RandomStreetFighterAgent:
     def __init__(self):
         pass
     
     def act(self, obs):
-        return "left"
+        return "Medium Kick"

@@ -41,6 +41,12 @@ BUILDING_DISTANCE = 7
 EXCLUDED_UNITS = {UnitTypeId.LARVA, UnitTypeId.CHANGELING, UnitTypeId.EGG}
 SCOUTING_INTERVAL = 300
 
+class WorkerRushBot(BotAI):
+    async def on_step(self, iteration: int):
+        if iteration == 0:
+            for worker in self.workers:
+                self.do(worker.attack(self.enemy_start_locations[0]))
+
 def sc2_run_game(transaction, lock, isReadyForNextStep, game_end_event, done_event,
                               bot_race, bot_difficulty, bot_build, map_name, log_path):
     map = map_name

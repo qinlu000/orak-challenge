@@ -72,6 +72,8 @@ class Renderer:
         self.last_render_time = 0.0
         self.throttle_ms = 50  # Minimum time between renders
         self._started = False
+        # Plain logs mode (disables Rich Live UI) controlled via env var ORAK_PLAIN_LOGS
+        self.headless = os.getenv("ORAK_PLAIN_LOGS", "").lower() in ("1", "true", "yes", "y")
 
     def start(self, local: bool = False, session_id: Optional[str] = None,
               game_data_path: str = "", submission_id: Optional[str] = None):
@@ -83,7 +85,10 @@ class Renderer:
         self.state.session_id = session_id
         self.state.game_data_path = game_data_path
         self.state.submission_id = submission_id
-
+        # Respect plain logs mode: skip Live initialization
+        if self.headless:
+            self._started = True
+            return
         # Start Live context (header is now part of the layout)
         layout = self._build_layout()
         self.live = Live(
@@ -119,7 +124,7 @@ class Renderer:
 
     def _refresh(self):
         """Update the Live display with current state."""
-        if not self.live or not self._started:
+        if self.headless or not self.live or not self._started:
             return
 
         # Don't refresh if evaluation is completed
@@ -299,13 +304,21 @@ class Renderer:
 
     def warn(self, message: str):
         """Add a warning message to the events panel."""
-        self.state.warnings.append(f"[dim]{time.strftime('%H:%M:%S')}[/dim] ⚠ {message}")
-        self._refresh()
+        formatted = f"[dim]{time.strftime('%H:%M:%S')}[/dim] ⚠ {message}"
+        self.state.warnings.append(formatted)
+        if self.headless:
+            self.console.print(formatted)
+        else:
+            self._refresh()
 
     def event(self, message: str):
         """Add an info event to the events panel."""
-        self.state.warnings.append(f"{time.strftime('%H:%M:%S')} {message}")
-        self._refresh()
+        formatted = f"{time.strftime('%H:%M:%S')} {message}"
+        self.state.warnings.append(formatted)
+        if self.headless:
+            self.console.print(formatted)
+        else:
+            self._refresh()
 
     def info(self, message: str):
         """Print an info message outside the live area (for console logs)."""

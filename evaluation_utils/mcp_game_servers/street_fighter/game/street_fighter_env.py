@@ -415,7 +415,7 @@ class StreetFighterEnv(BaseEnv):
         settings.characters = self.character
 
         # self._env = diambra.arena.make()
-        self._env = diambra.arena.make("sfiii3n", settings, render_mode="human")
+        self._env = diambra.arena.make("sfiii3n", settings, render_mode="rgb_array")
         # save settings to a text file
         with open(f"settings.txt", "w") as f:
             f.write(str(settings))

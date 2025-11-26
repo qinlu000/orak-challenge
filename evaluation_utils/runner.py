@@ -11,13 +11,14 @@ from evaluation_utils.game_server_launcher import GameLauncher
 from evaluation_utils.renderer import Renderer
 from evaluation_utils.sessions import Session
 
-from agents.config import PokemonAgent, TwentyFourtyEightAgent, SuperMarioAgent, StarCraftAgent
+from agents.config import PokemonAgent, TwentyFourtyEightAgent, SuperMarioAgent, StarCraftAgent, StreetFighterAgent
 
 AGENT_MAP = {
     "pokemon_red": PokemonAgent,
     "twenty_fourty_eight": TwentyFourtyEightAgent,
     "super_mario": SuperMarioAgent,
     "star_craft": StarCraftAgent,
+    "street_fighter": StreetFighterAgent,
 }
 
 class Runner:
@@ -129,22 +130,31 @@ class Runner:
         async with env.client:
             self.renderer.start_game_timer(game_name)
 
+            # wait for game using async sleep
+            # await asyncio.sleep(60)
+
             # Prepare per-iteration state logging
             game_data_dir = os.path.join(GAME_DATA_DIR, game_name)
             os.makedirs(game_data_dir, exist_ok=True)
             game_states_path = os.path.join(game_data_dir, "game_states.jsonl")
             states_f = open(game_states_path, "a", encoding="utf-8")
 
+            game_config = await env.get_game_config()
+            max_episodes = game_config.get("max_episodes")
+
             try:
                 # Game loop
                 iteration = 0
-                while True:
+                episode = 0
+                avg_score = 0
+                while episode < max_episodes:
                     iteration += 1
                     obs = await env.load_obs()
                     action = agent.act(obs)
                     result = await env.dispatch_final_action(action)
                     finished = bool(result.get("is_finished"))
                     current_score = result.get("score", 0)
+                    avg_score = result.get("avg_score", 0)
 
                     # Append per-iteration JSONL record
                     try:
@@ -168,11 +178,12 @@ class Runner:
                     self.renderer.event(f"{game_display_name}: Iteration {iteration}, Score: {current_score}")
 
                     if finished:
-                        self.scores[game_name] = current_score
-                        self.renderer.event(f"{game_display_name}: Game finished after {iteration} iterations with final score: {current_score}")
-                        # Mark game as completed
-                        self.renderer.complete_game(game_name, current_score)
-                        break
+                        episode += 1
+                        self.renderer.event(f"{game_display_name}: Game finished after {iteration} steps with final score: {current_score}. Starting new episode... ({episode}/{max_episodes})")
+
+                self.scores[game_name] = avg_score
+                # Mark game as completed
+                self.renderer.complete_game(game_name, avg_score)
             except Exception as e:
                 self.renderer.event(f"{game_display_name}: Error: {e}")
                 raise

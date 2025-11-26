@@ -3,9 +3,11 @@ from agents.random_pokemon import RandomPokemonAgent
 from agents.random_twenty_fourty_eight import RandomTwentyFourtyEightAgent
 from agents.openai_twenty_fourty_eight import OpenAITwentyFourtyEightAgent
 from agents.random_starcraft import RandomStarCraftAgent
+from agents.random_street_fighter import RandomStreetFighterAgent
 
 PokemonAgent = RandomPokemonAgent
 # TwentyFourtyEightAgent = OpenAITwentyFourtyEightAgent
 TwentyFourtyEightAgent = RandomTwentyFourtyEightAgent
 SuperMarioAgent = RandomMarioAgent
 StarCraftAgent = RandomStarCraftAgent
+StreetFighterAgent = RandomStreetFighterAgent

@@ -23,3 +23,6 @@ class GameEnv:
     
     async def dispatch_final_action(self, action: str):
         return await self._call_tool("dispatch-final-action", {"action_str": action})
+    
+    async def get_game_config(self):
+        return await self._call_tool("get-game-config")
