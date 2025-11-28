@@ -21,17 +21,39 @@ AGENT_MAP = {
     "street_fighter": StreetFighterAgent,
 }
 
+
 class Runner:
-    def __init__(self, session_id: str | None = None, local: bool = False, renderer: Renderer = None):
+    def __init__(
+        self,
+        session_id: str | None = None,
+        local: bool = False,
+        renderer: Renderer | None = None,
+        games: list[str] | None = None,
+    ):
         self.local = local
         self.renderer = renderer
-        self.scores = {game: 0 for game in GAME_SERVER_PORTS.keys()}
+
+        # Determine which games to run
+        if self.local:
+            # Local mode: allow selecting a subset of games
+            if games is None:
+                self.games = list(GAME_SERVER_PORTS.keys())
+            else:
+                invalid = [g for g in games if g not in GAME_SERVER_PORTS]
+                if invalid:
+                    raise ValueError(f"Unknown game(s) requested: {', '.join(invalid)}")
+                self.games = games
+        else:
+            # Remote mode: always run all games; per-game selection is only supported locally
+            self.games = list(GAME_SERVER_PORTS.keys())
+
+        self.scores = {game: 0 for game in self.games}
         self.session_file = None
 
         if self.local:
             self.renderer.event("Running in LOCAL mode")
-            self.mcp_urls = {game: f"http://localhost:{GAME_SERVER_PORTS[game]}/mcp" for game in self.scores.keys()}
-            self.game_launcher = GameLauncher(renderer)
+            self.mcp_urls = {game: f"http://localhost:{GAME_SERVER_PORTS[game]}/mcp" for game in self.games}
+            self.game_launcher = GameLauncher(renderer, games=self.games)
         else:
             self.renderer.event("Running in REMOTE mode")
             self.session = Session(session_id=session_id, renderer=self.renderer)
@@ -88,14 +110,15 @@ class Runner:
     
     async def evaluate_all_games(self):
         if self.local:
-            self.game_launcher.start_game_servers()
+            # Only start the subset of games selected for this run
+            self.game_launcher.start_game_servers(self.games)
             # self.renderer.event("Waiting for game servers to be ready...")
 
         self.renderer.event(f"Starting parallel evaluation of {len(self.scores)} games")
 
         try:
-            # Evaluate all games in parallel
-            tasks = [asyncio.create_task(self.start_game(game_name)) for game_name in self.scores.keys()]
+            # Evaluate all selected games in parallel
+            tasks = [asyncio.create_task(self.start_game(game_name)) for game_name in self.games]
             await asyncio.gather(*tasks)
 
             self.renderer.event("All games completed successfully")

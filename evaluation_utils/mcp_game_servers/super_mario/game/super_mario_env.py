@@ -5,7 +5,7 @@ import time
 import requests
 
 from dataclasses import dataclass, field
-from typing import SupportsFloat, Any, Tuple, Dict, Iterator, List
+from typing import SupportsFloat, Any, Tuple, Dict, Iterator, List, Optional
 
 import gym
 from gymnasium.core import ObsType
@@ -261,26 +261,47 @@ class SuperMarioEnv(BaseEnv):
 
         raise TypeError(f"Unsupported image type: {type(image)}")
     
-    def reset(self):
-        return self.env.reset()
+    def _start_new_episode(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None) -> SuperMarioObs:
+        """Reset the underlying gym env and return a freshly prepared SuperMarioObs."""
+        reset_kwargs = {}
+        if seed is not None:
+            reset_kwargs["seed"] = seed
+        if options is not None:
+            reset_kwargs["options"] = options
+
+        reset_result = self.env.reset(**reset_kwargs) if reset_kwargs else self.env.reset()
+        if isinstance(reset_result, tuple):
+            state, info = reset_result
+        else:
+            state, info = reset_result, {}
+
+        n_skip = random.randint(20, 30)
+        last_info = info
+        done = False
+        trunc = False
+        for _ in range(n_skip):
+            state, reward, done, trunc, info = self.env.step(action=0)
+            last_info = info
+            if done or trunc:
+                break
+
+        self.env.render()
+        self.jump_level = 0
+        self.mario_loc_history = []
+
+        return SuperMarioObs(
+            state={"image": state},
+            image=self.to_pil_image(state),
+            info=last_info,
+            reward={"distance": 0, "done": False}
+        )
+
+    def reset(self, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None):
+        return self._start_new_episode(seed=seed, options=options)
 
     # gamebench functions
     def initial_obs(self) -> Obs:
-        self.env.reset()
-
-        # skip meaningless init frames (for Mario level 1-1)
-        n_skip = random.randint(20, 30)
-        for i in range(n_skip):
-            state, reward, done, trunc, info = self.env.step(action=0)
-        self.env.render()
-
-        obs = SuperMarioObs(
-            state = {"image" : state},
-            image = self.to_pil_image(state), #TODO: type check--- should be PIL image
-            info = info,
-            reward = {"distance": 0, "done": False}
-        )
-        return obs
+        return self._start_new_episode()
 
     def get_game_info(self) -> dict:
         

@@ -10,13 +10,15 @@ from evaluation_utils.renderer import Renderer
 
 
 class GameLauncher:
-    def __init__(self, renderer: Renderer):
+    def __init__(self, renderer: Renderer, games: list[str] | None = None):
         self.renderer = renderer
+        # If no specific games are provided, default to all known games
+        self.games = games or list(GAME_SERVER_PORTS.keys())
         self.game_servers_procs = {}
         self.output_files = {}
 
         # Initialize all game servers as queued in the renderer
-        for game in GAME_SERVER_PORTS:
+        for game in self.games:
             self.renderer.set_server_status(game, "queued")
             self.renderer.set_score(game, 0)
 
@@ -30,7 +32,7 @@ class GameLauncher:
 
     def _update_scores_from_disk(self):
         """Update renderer with scores read from disk."""
-        for game in GAME_SERVER_PORTS:
+        for game in self.games:
             results_path = os.path.join(GAME_DATA_DIR, game, "game_results.json")
             score_val = 0
             try:
@@ -72,10 +74,12 @@ class GameLauncher:
 
         return proc
 
-    def start_game_servers(self):
+    def start_game_servers(self, games: list[str] | None = None):
         self.renderer.event("Initializing game servers...")
 
-        for game_name in GAME_SERVER_PORTS:
+        game_list = games or self.games
+
+        for game_name in game_list:
             self.launch_game_server(game_name)
             time.sleep(0.5)
 
