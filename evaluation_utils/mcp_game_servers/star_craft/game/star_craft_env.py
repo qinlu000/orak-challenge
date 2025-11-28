@@ -165,16 +165,24 @@ class StarCraftEnv(BaseEnv):
         self.summary = {}
         self.executed_actions = []
 
-        self.lock = multiprocessing.Manager().Lock()
-        self.transaction = multiprocessing.Manager().dict()
+        # Use a single multiprocessing context for all sync primitives so they
+        # share the same backend and avoid Manager connection issues.
+        ctx = multiprocessing.get_context()
+
+        # Keep a reference to the Manager to prevent garbage collection.
+        # Use the Manager only for the shared dict; use a normal Lock so it
+        # does not depend on the Manager's IPC channel.
+        self._manager = ctx.Manager()
+        self.lock = ctx.Lock()
+        self.transaction = self._manager.dict()
         self.transaction.update(
             {'information': {}, 'reward': 0, 'action': None,
              'done': False, 'result': None, 'iter': 0, 'command': None, "output_command_flag": False,
              'action_executed': [], 'action_failures': [], })
-        self.isReadyForNextStep = multiprocessing.Event()
-        self.game_end_event = multiprocessing.Event()
-        self.game_over = multiprocessing.Value('b', False)
-        self.done_event = multiprocessing.Event()
+        self.isReadyForNextStep = ctx.Event()
+        self.game_end_event = ctx.Event()
+        self.game_over = ctx.Value('b', False)
+        self.done_event = ctx.Event()
         self.p = None
         self.check_process(reset=True)
         self.check_process()
@@ -304,7 +312,11 @@ class StarCraftEnv(BaseEnv):
 
     def evaluate(self, obs: Obs):
         result = self.transaction['result']
-        return result.name if result is not None else None, self.transaction['done']
+        if result is None:
+            return 0, self.transaction['done']
+        if result.name == "defeat":
+            return 0, self.transaction['done']
+        return 1, self.transaction['done']
 
     def get_game_info(self) -> dict:
         return {

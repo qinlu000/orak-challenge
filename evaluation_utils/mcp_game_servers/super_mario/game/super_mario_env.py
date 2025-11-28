@@ -261,6 +261,9 @@ class SuperMarioEnv(BaseEnv):
 
         raise TypeError(f"Unsupported image type: {type(image)}")
     
+    def reset(self):
+        return self.env.reset()
+
     # gamebench functions
     def initial_obs(self) -> Obs:
         self.env.reset()

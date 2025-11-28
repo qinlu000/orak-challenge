@@ -423,6 +423,12 @@ class StreetFighterEnv(BaseEnv):
         self._env.render()
 
         return 0
+    
+    def reset(self, seed: int = None, options: dict = None):
+        _, _ = self._env.reset(seed=42)
+        self._env.render()
+        observation = self.initial_obs()
+        return observation
 
     def observe(self, observation: dict):
         """

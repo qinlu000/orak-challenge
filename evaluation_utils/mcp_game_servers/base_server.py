@@ -91,37 +91,48 @@ class MCPGameServer:
         with open(GAME_RESULTS_PATH, "w") as fp:
             json.dump({
                 "score": self._score,
-                "avg_score": self._score / self._episodes,
+                "avg_score": self._score / (self._episodes + 1),
                 "start_time": self._start_time,
                 "end_time": self._end_time,
                 "steps_times": self._steps_times,
                 "game_info": self.env.get_game_info()
             }, fp)
 
+    def reset_env(self):
+        try:
+            self.env.reset()
+        except Exception as e:
+            # recreate game env for new episode
+            self.env = EnvCreator(self.cfg).create()
+            self.first_loading = True
+
     def dispatch_action_and_get_score(self, action_str: str) -> Tuple[int, bool]:
         score = -1
         action = self.env.text2action(action_str)
         logger.info(f"executing actions: {action}")
-        self.obs, reward, terminated, truncated, info = self.env.step(action)
-        score, done = self.env.evaluate(self.obs)
-        retries = 0
-        while score is None and retries < 30:
+        try:
             self.obs, reward, terminated, truncated, info = self.env.step(action)
-            score, done = self.env.evaluate(self.obs)
-            retries += 1
-            time.sleep(10)
-        if score is None:
-            raise Exception("Failed to get score, is the game running?")
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            raise e
+        score, done = self.env.evaluate(self.obs)
+        # retries = 0
+        # while score is None and retries < 30:
+        #     self.obs, reward, terminated, truncated, info = self.env.step(action)
+        #     score, done = self.env.evaluate(self.obs)
+        #     retries += 1
+        #     time.sleep(10)
+        # if score is None:
+        #     raise Exception("Failed to get score, is the game running?")
         is_finished = terminated or truncated or done
+        logger.info(f"score: {score}, is_finished: {is_finished}")
         self._score += score
         if len(self._steps_times) >= self._max_steps:
             is_finished = True
             self._episodes += 1
         
         if self._episodes < MAX_EPISODES:
-            # recreate game env for new episode
-            self.env = EnvCreator(self.cfg).create()
-            self.first_loading = True
+            self.reset_env()
         
         return score, is_finished
 
@@ -133,7 +144,11 @@ class MCPGameServer:
             else:
                 self._steps_times.append(time.time())
             
-            obs_str, obs_image_str, game_info = self.load_current_obs()
+            try:
+                obs_str, obs_image_str, game_info = self.load_current_obs()
+            except Exception as e:
+                logger.error(traceback.format_exc())
+                raise e
             logger.info(f"load_obs result: {obs_str}, \n{game_info}")
             return json.dumps({
                 "obs_str": obs_str,
