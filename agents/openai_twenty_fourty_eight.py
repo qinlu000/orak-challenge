@@ -48,6 +48,8 @@ Provide your response in the strict format:
 MODEL = "gpt-5-nano"
 
 class OpenAITwentyFourtyEightAgent:
+    TRACK = "TRACK1"
+    
     def __init__(self):
         self.client = openai.OpenAI()
     

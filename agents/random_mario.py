@@ -1,4 +1,6 @@
 class RandomMarioAgent:
+    TRACK = "TRACK1"
+
     def __init__(self):
         pass
     
