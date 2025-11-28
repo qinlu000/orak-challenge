@@ -1,20 +1,105 @@
+import asyncio
 import logging
 import json
-from fastmcp.client import Client
-import backoff
 
-from evaluation_utils.commons import logger, log_handler
+import backoff
+from fastmcp.client import Client
+
+from evaluation_utils.commons import (
+    logger,
+    log_handler,
+    MCP_MAX_RETRY_TRIES,
+    MCP_MAX_RETRY_TIME,
+    MCP_BACKOFF_BASE,
+    MCP_BACKOFF_MAX_INTERVAL,
+    MCP_CALL_TIMEOUT_SECONDS,
+)
+
+try:
+    from aiohttp import ClientError as AioHttpClientError
+except ImportError:  # pragma: no cover - aiohttp ships with fastmcp but guard just in case
+    class AioHttpClientError(Exception):
+        """Fallback when aiohttp is unavailable."""
+        pass
+
+
+RETRYABLE_MCP_EXCEPTIONS = (
+    asyncio.TimeoutError,
+    ConnectionError,
+    OSError,
+    AioHttpClientError,
+)
+
+
+def _describe_operation(details: dict) -> str:
+    """Generate a human-readable label for the retried operation."""
+    func_name = getattr(details.get("target"), "__name__", "unknown")
+    if func_name == "_call_tool":
+        args = details.get("args", [])
+        if len(args) > 1:
+            return f"{func_name}:{args[1]}"
+    return func_name
+
+
+def _log_retry_event(details: dict):
+    label = _describe_operation(details)
+    tries = details.get("tries", 0)
+    exc = details.get("exception")
+    logger.warning(
+        "MCP %s retry %s due to %s: %s",
+        label,
+        tries,
+        exc.__class__.__name__ if exc else "UnknownError",
+        exc,
+    )
+
+
+def _log_giveup_event(details: dict):
+    label = _describe_operation(details)
+    exc = details.get("exception")
+    logger.error(
+        "MCP %s giving up after %s attempts due to %s: %s",
+        label,
+        details.get("tries", "unknown"),
+        exc.__class__.__name__ if exc else "UnknownError",
+        exc,
+    )
 
 class GameEnv:
     def __init__(self, mcp_url: str):
         self.client = Client(mcp_url, log_handler=log_handler)
     
+    @backoff.on_exception(
+        backoff.expo,
+        RETRYABLE_MCP_EXCEPTIONS,
+        max_time=MCP_MAX_RETRY_TIME,
+        max_tries=MCP_MAX_RETRY_TRIES,
+        base=MCP_BACKOFF_BASE,
+        max_value=MCP_BACKOFF_MAX_INTERVAL,
+        jitter=backoff.full_jitter,
+        on_backoff=_log_retry_event,
+        on_giveup=_log_giveup_event,
+    )
     async def wait_for_ping(self):
-        await self.client.ping()
+        await asyncio.wait_for(self.client.ping(), timeout=MCP_CALL_TIMEOUT_SECONDS)
     
+    @backoff.on_exception(
+        backoff.expo,
+        RETRYABLE_MCP_EXCEPTIONS,
+        max_time=MCP_MAX_RETRY_TIME,
+        max_tries=MCP_MAX_RETRY_TRIES,
+        base=MCP_BACKOFF_BASE,
+        max_value=MCP_BACKOFF_MAX_INTERVAL,
+        jitter=backoff.full_jitter,
+        on_backoff=_log_retry_event,
+        on_giveup=_log_giveup_event,
+    )
     async def _call_tool(self, tool_name: str, *args, **kwargs):
         logging.getLogger(__name__).debug("Calling tool %s with args=%s kwargs=%s", tool_name, args, kwargs)
-        result = await self.client.call_tool(tool_name, *args, **kwargs)
+        result = await asyncio.wait_for(
+            self.client.call_tool(tool_name, *args, **kwargs),
+            timeout=MCP_CALL_TIMEOUT_SECONDS,
+        )
         logging.getLogger(__name__).debug("Tool %s result: %s", tool_name, result)
         return json.loads(result.structured_content["result"])
 

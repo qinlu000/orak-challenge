@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 # This mapping is useful for converting MCP level strings to Python's levels
 LOGGING_LEVEL_MAP = logging.getLevelNamesMapping()
 
+# Retry/backoff configuration for MCP client interactions. Exposed as env vars so
+# users can tweak them without touching the code.
+MCP_MAX_RETRY_TRIES = int(os.getenv("MCP_MAX_RETRY_TRIES", "6"))
+MCP_MAX_RETRY_TIME = float(os.getenv("MCP_MAX_RETRY_TIME", "300"))
+MCP_BACKOFF_BASE = float(os.getenv("MCP_BACKOFF_BASE", "1.5"))
+MCP_BACKOFF_MAX_INTERVAL = float(os.getenv("MCP_BACKOFF_MAX_INTERVAL", "10"))
+MCP_CALL_TIMEOUT_SECONDS = float(os.getenv("MCP_CALL_TIMEOUT_SECONDS", "20"))
+
 async def log_handler(message: LogMessage):
     """
     Handles incoming logs from the MCP server and forwards them
