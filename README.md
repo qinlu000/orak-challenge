@@ -111,6 +111,19 @@ A successful execution will conclude with an evaluation summary. An example outp
 
 A successful run confirms that your environment is correctly configured, and you can now proceed with agent development.
 
+### Switching between Live UI and plain logs
+
+By default, the evaluation runner uses a **Rich Live UI** with a dynamic table, spinners, and a status banner.
+
+- **Live UI (default)**: run the commands as shown above, e.g. `uv run python run.py --local`.
+- **Plain logs mode**: set the `ORAK_PLAIN_LOGS` environment variable to a truthy value (`"1"`, `"true"`, `"yes"`, or `"y"`) before running, for example:
+
+```bash
+ORAK_PLAIN_LOGS=1 uv run python run.py --local
+```
+
+This switches rendering to simple line-based logs (no Live UI), which is often preferable in CI or when piping output to files. To go back to the Live UI, unset `ORAK_PLAIN_LOGS` or set it to any other value.
+
 ---
 
 ## 💻 Developing Your Agent

@@ -49,6 +49,9 @@ class StarCraftObs(Obs):
     def to_text(self):
 
         def create_summary(category_data):
+            # Gracefully handle missing or malformed category data
+            if not isinstance(category_data, dict):
+                return ""
             summary = ""
             for key, value in category_data.items():
                 if isinstance(value, dict):
@@ -59,28 +62,35 @@ class StarCraftObs(Obs):
                     summary += f"- {key.replace('_', ' ').capitalize()}: {value}\n"
             return summary
         
-        for key in self.observation:
-            if isinstance(self.observation[key], str):
+        # Normalize any JSON-serialized observation entries into dictionaries
+        for key, value in list(self.observation.items()):
+            if isinstance(value, str):
                 try:
-                    self.observation[key] = json.loads(self.observation[key].replace("'", "\""))
+                    self.observation[key] = json.loads(value.replace("'", "\""))
                 except json.JSONDecodeError:
-                    raise ValueError(f"Failed to parse value of '{key}' as JSON. Value: {self.observation[key]}")
+                    raise ValueError(f"Failed to parse value of '{key}' as JSON. Value: {value}")
 
         summary = ""
 
-        for key in self.observation:
+        for key, temp_obs in self.observation.items():
 
-            temp_obs = self.observation[key]
+            # Skip entries that are not in the expected dict format
+            if not isinstance(temp_obs, dict):
+                continue
 
-            if not isinstance(temp_obs.get('resource'), dict):
-                raise ValueError(f"Expected 'resource' to be a dictionary, but got: {type(temp_obs.get('resource'))}, value: {temp_obs.get('resource')}")
+            resource_section = temp_obs.get('resource')
+            # At episode boundaries or during initialization, we can see incomplete
+            # observations where "resource" is missing or not yet populated. In that
+            # case, skip this entry instead of crashing with a ValueError.
+            if not isinstance(resource_section, dict):
+                continue
 
-            game_time = temp_obs['resource'].get('game_time', "unknown time")
+            game_time = resource_section.get('game_time', "unknown time")
 
             temp_summary = f"{key}: At {game_time} game time, our current StarCraft II situation is as follows:\n\n"
 
             categories = [
-                ("Resources", temp_obs.get("resource", {})),
+                ("Resources", resource_section),
                 ("Buildings", temp_obs.get("building", {})),
                 ("Units", temp_obs.get("unit", {})),
                 ("Research", temp_obs.get("research", {})),

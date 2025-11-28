@@ -102,7 +102,10 @@ class GameLauncher:
 
             if not silent:
                 self.renderer.event(f"Shutting down {game_name}")
-            self.renderer.set_server_status(game_name, "stopped")
+            # Only set to "stopped" if not already in a terminal state
+            current_status = self.renderer.state.server_status_by_game.get(game_name)
+            if current_status not in ("completed", "failed", "stopped"):
+                self.renderer.set_server_status(game_name, "stopped")
             self.clean_up_game_server(game_name)
 
     def force_stop_all_games(self):

@@ -175,11 +175,16 @@ class Runner:
 
                     # Log every 10 iterations or on score changes
                     # if iteration % 10 == 0 or (iteration > 1 and current_score != self.scores.get(game_name, 0)):
-                    self.renderer.event(f"{game_display_name}: Iteration {iteration}, Score: {current_score}")
+                    self.renderer.event(f"{game_display_name}: Step {iteration}, Episode: {episode+1}, Score: {current_score}")
 
                     if finished:
                         episode += 1
-                        self.renderer.event(f"{game_display_name}: Game finished after {iteration} steps with final score: {current_score}. Starting new episode... ({episode}/{max_episodes})")
+                        iteration = 0
+                        self.renderer.event(f"{game_display_name}: Game finished after {iteration} steps with final score: {current_score}")
+                        if episode < max_episodes:
+                            self.renderer.event(f"{game_display_name}: Starting new episode... ({episode+1}/{max_episodes})")
+                        else:
+                            self.renderer.event(f"{game_display_name}: Max episodes reached. Game finished.")
 
                 self.scores[game_name] = avg_score
                 # Mark game as completed

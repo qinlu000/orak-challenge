@@ -9,6 +9,7 @@ import time
 import base64
 from io import BytesIO
 import traceback
+import threading
 
 from mcp.server.fastmcp import FastMCP
 from mcp_game_servers.utils.module_creator import EnvCreator
@@ -42,6 +43,8 @@ class MCPGameServer:
         self.cfg = self.create_config(config_path, expand_log_path)
         logger.info(f"config_path: {config_path}")
         self.mcp = mcp_server
+        # Lock to serialize access to env (step/reset/cleanup) across tool calls
+        self._env_lock = threading.Lock()
         self.register_tools()
 
         # set env
@@ -52,6 +55,7 @@ class MCPGameServer:
         self.first_loading = True
 
         self._score = 0
+        self._total_score = 0
         self._start_time = None
         self._end_time = None
         self._steps_times = []
@@ -73,11 +77,13 @@ class MCPGameServer:
         return img_str
 
     def load_current_obs(self) -> Tuple[str, dict]:
-        if self.first_loading:
-            self.obs = self.env.initial_obs()
-            self.first_loading = False
-        obs_str, obs_image = self.obs.to_text(), getattr(self.obs, 'image', None)
-        game_info = self.env.get_game_info()
+        logger.info("Loading current observation")
+        with self._env_lock:
+            if self.first_loading:
+                self.obs = self.env.initial_obs()
+                self.first_loading = False
+            obs_str, obs_image = self.obs.to_text(), getattr(self.obs, 'image', None)
+            game_info = self.env.get_game_info()
 
         # encode image to base64
         if obs_image is not None:
@@ -91,7 +97,7 @@ class MCPGameServer:
         with open(GAME_RESULTS_PATH, "w") as fp:
             json.dump({
                 "score": self._score,
-                "avg_score": self._score / (self._episodes + 1),
+                "avg_score": (self._total_score / self._episodes) if self._episodes > 0 else 0,
                 "start_time": self._start_time,
                 "end_time": self._end_time,
                 "steps_times": self._steps_times,
@@ -99,23 +105,60 @@ class MCPGameServer:
             }, fp)
 
     def reset_env(self):
-        try:
-            self.env.reset()
-        except Exception as e:
-            # recreate game env for new episode
-            self.env = EnvCreator(self.cfg).create()
-            self.first_loading = True
+        """Cleanup previous environment and create a new one."""
+        logger.info("Resetting environment: cleaning up previous instance...")
 
-    def dispatch_action_and_get_score(self, action_str: str) -> Tuple[int, bool]:
+        with self._env_lock:
+            old_env = self.env
+            new_obs = None
+            try:
+                new_obs = self.env.reset()
+            except Exception:
+                # Fall back to creating a completely new env instance
+                new_obs = None
+
+            if new_obs is None:
+                try:
+                    new_env = EnvCreator(self.cfg).create()
+                except Exception as e:
+                    logger.error(f"Failed to create new environment: {e}")
+                    # Keep old (cleaned) env reference to avoid None; caller will see errors instead of hanging
+                    return
+
+                self.env = new_env
+                self.first_loading = True
+                # Prime the first observation for the new env
+                logger.info("New environment created successfully.")
+                new_obs = self.env.initial_obs()
+
+            # Reset per-episode step tracking so MAX_STEPS applies per episode, not globally
+            self._steps_times = []
+            self._start_time = None
+            self._end_time = None
+
+            return new_obs
+
+    def _delayed_exit(self):
+        """Cleanup and exit after a short delay to allow response to be sent."""
+        logger.info("Performing final cleanup and exiting...")
+        if hasattr(self.env, 'cleanup'):
+            try:
+                self.env.cleanup()
+            except Exception as e:
+                logger.warning(f"Error during final env cleanup: {e}")
+        os._exit(0)
+
+    def dispatch_action_and_get_score(self, action_str: str) -> Tuple[int, bool, bool]:
         score = -1
-        action = self.env.text2action(action_str)
-        logger.info(f"executing actions: {action}")
-        try:
-            self.obs, reward, terminated, truncated, info = self.env.step(action)
-        except Exception as e:
-            logger.error(traceback.format_exc())
-            raise e
-        score, done = self.env.evaluate(self.obs)
+        with self._env_lock:
+            action = self.env.text2action(action_str)
+            logger.info(f"executing actions: {action}")
+            try:
+                self.obs, reward, terminated, truncated, info = self.env.step(action)
+            except Exception as e:
+                logger.error(traceback.format_exc())
+                raise e
+            score, done = self.env.evaluate(self.obs)
         # retries = 0
         # while score is None and retries < 30:
         #     self.obs, reward, terminated, truncated, info = self.env.step(action)
@@ -126,19 +169,37 @@ class MCPGameServer:
         #     raise Exception("Failed to get score, is the game running?")
         is_finished = terminated or truncated or done
         logger.info(f"score: {score}, is_finished: {is_finished}")
-        self._score += score
+        self._score = score
         if len(self._steps_times) >= self._max_steps:
             is_finished = True
+        
+        # Track if we've reached max episodes
+        max_episodes_reached = False
+        
+        # Only reset the env when the episode actually finishes and we need a new one
+        if is_finished:
             self._episodes += 1
+            self._total_score += score
+            if self._episodes < MAX_EPISODES:
+                self.obs = self.reset_env()
+            else:
+                # Max episodes reached - mark for exit after response is sent
+                max_episodes_reached = True
+                logger.info(f"Max episodes ({MAX_EPISODES}) reached. Will exit after response.")
         
-        if self._episodes < MAX_EPISODES:
-            self.reset_env()
-        
-        return score, is_finished
+        return score, is_finished, max_episodes_reached
+    
+    def wait_for_env(self):
+        while self.env is None:
+            time.sleep(0.1)
+            logger.info("Waiting for environment to be created...")
+        logger.info("Environment created successfully.")
 
     def register_tools(self):
         @self.mcp.tool(name="load-obs", description="Load observation and game info from the server.")
         def load_obs() -> str:
+            logger.info("Request for loading observation")
+            self.wait_for_env()
             if not self._start_time:
                 self._start_time = time.time()
             else:
@@ -158,33 +219,49 @@ class MCPGameServer:
 
         @self.mcp.tool(name="send-action-set", description="Send a action set to the server.")
         def send_action_set(action_set: list) -> str:
+            self.wait_for_env()
             self.env.send_action_set(action_set)
             return "Action set sent"
         
         @self.mcp.tool(name='get-current-state', description='Get the current state of the game')
         def get_current_state() -> str:
+            self.wait_for_env()
+            current_state = self.env._receive_state()
             return json.dumps({
-                "current_state": self.env._receive_state()
+                "current_state": current_state
             })
 
         @self.mcp.tool(name="dispatch-final-action", description="Dispatch a client final action to the server and return score and termination flag")
         def dispatch_final_action(action_str: str) -> str:
+            self.wait_for_env()
             try:
-                score, is_finished = self.dispatch_action_and_get_score(action_str)
+                score, is_finished, max_episodes_reached = self.dispatch_action_and_get_score(action_str)
             except Exception as e:
                 logger.error(traceback.format_exc())
                 raise e
             logger.info(f"dispatch_final_action result: {score}, {is_finished}")
             if is_finished:
                 self.log_game_results()
-            return json.dumps({
+            
+            # Prepare response first
+            response = json.dumps({
                 "score": score,
-                "avg_score": self._score / (self._episodes + 1),
+                "avg_score": (self._total_score / self._episodes) if self._episodes > 0 else 0,
                 "is_finished": is_finished
             })
+            
+            # Schedule exit after response is sent (if max episodes reached)
+            if max_episodes_reached:
+                # Use a timer to exit after a short delay, allowing response to be sent
+                timer = threading.Timer(1.0, self._delayed_exit)
+                timer.daemon = True
+                timer.start()
+            
+            return response
         
         @self.mcp.tool(name="get-game-config", description="Get the game config")
         def get_game_config() -> str:
+            logger.info("Getting game config...")
             return json.dumps({
                 "game_id": GAME_ID,
                 "max_steps": self._max_steps,
