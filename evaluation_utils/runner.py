@@ -49,6 +49,8 @@ class Runner:
 
         self.scores = {game: 0 for game in self.games}
         self.session_file = None
+        self._session_provided_by_user = session_id is not None
+        self._should_delete_session_file = False
 
         if self.local:
             self.renderer.event("Running in LOCAL mode")
@@ -57,6 +59,7 @@ class Runner:
         else:
             self.renderer.event("Running in REMOTE mode")
             self.session = Session(session_id=session_id, renderer=self.renderer)
+            self._should_delete_session_file = not self._session_provided_by_user
 
             session_dir = os.path.join(os.getcwd(), ".aicrowd")
             session_file = os.path.join(session_dir, "session_id")
@@ -116,16 +119,21 @@ class Runner:
 
         self.renderer.event(f"Starting parallel evaluation of {len(self.scores)} games")
 
+        all_games_succeeded = True
         try:
             # Evaluate all selected games in parallel
             tasks = [asyncio.create_task(self.start_game(game_name)) for game_name in self.games]
             await asyncio.gather(*tasks)
 
             self.renderer.event("All games completed successfully")
+        except Exception:
+            all_games_succeeded = False
+            raise
         finally:
             if self.local:
                 self.renderer.event("Stopping all game servers...")
                 self.game_launcher.force_stop_all_games()
+            self._cleanup_session_file(all_games_succeeded)
 
     @backoff.on_exception(backoff.constant, Exception, max_time=3000, max_tries=300, interval=10)
     async def wait_for_client_connect(self, env: GameEnv):
@@ -221,5 +229,22 @@ class Runner:
                 except Exception:
                     pass
 
-        if not self.local and self.session_file:
+    def _cleanup_session_file(self, all_games_succeeded: bool):
+        if (
+            self.local
+            or not all_games_succeeded
+            or not self._should_delete_session_file
+            or not self.session_file
+        ):
+            return
+
+        try:
             os.remove(self.session_file)
+            if self.renderer:
+                self.renderer.event("Session completed. Cleaning up saved session id.")
+        except FileNotFoundError:
+            # Already removed or never created; ignore.
+            pass
+        except OSError as exc:
+            if self.renderer:
+                self.renderer.event(f"Warning: Failed to delete session file: {exc}")
