@@ -127,7 +127,7 @@ class Runner:
                 self.renderer.event("Stopping all game servers...")
                 self.game_launcher.force_stop_all_games()
 
-    @backoff.on_exception(backoff.constant, Exception, max_time=180, max_tries=60, interval=3)
+    @backoff.on_exception(backoff.constant, Exception, max_time=3000, max_tries=300, interval=10)
     async def wait_for_client_connect(self, env: GameEnv):
         async with env.client:
             await env.wait_for_ping()
