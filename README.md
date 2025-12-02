@@ -102,7 +102,7 @@ cd orak-2025-starter-kit
 With the setup complete, you can now run a full local evaluation using the provided random agent to verify your environment.
 
 ```bash
-diambra run uv run python run.py --local
+diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local
 ```
 
 ### Step 3b: Run a Single Game (or Subset of Games) — LOCAL Mode Only
@@ -112,11 +112,11 @@ For faster iteration while developing your agent **in local mode**, you can run 
 ```bash
 # Examples (LOCAL mode)
 uv run python run.py --local --games super_mario
-diambra run uv run python run.py --local --games street_fighter
+diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local --games street_fighter
 uv run python run.py --local --games pokemon_red
 
 # You can also run multiple games:
-diambra run uv run python run.py --local --games super_mario street_fighter
+diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local --games super_mario street_fighter
 ```
 
 > Note: The `--games` flag is **only supported with `--local`**. In remote/submission mode, all games are always evaluated.
