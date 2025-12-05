@@ -1,5 +1,5 @@
 import openai
-
+import re
 
 SYSTEM_PROMPT = """
 You are an expert AI agent specialized in playing the 2048 game with advanced strategic reasoning. 
@@ -35,7 +35,16 @@ Ensure that:
 
 USER_PROMPT = """
 ### Target task
-{obs}
+{task_description}
+
+### Previous state
+{prev_state_str}
+
+### Last executed action
+{action}
+
+### Current state
+{cur_state_str}
 
 You should only respond in the format described below, and you should not output comments or other information.
 Provide your response in the strict format: 
@@ -52,19 +61,39 @@ class OpenAITwentyFourtyEightAgent:
     
     def __init__(self):
         self.client = openai.OpenAI()
-    
-    def act(self, obs, iteration=0):
+        self.prev_state_str = "N/A"
+        self.last_action = "No action yet"
+
+    def act(self, obs):
+        game_info = obs.get("game_info", {})
+        cur_state_str = obs.get("obs_str", "")
+
         response = self.client.responses.create(
             model=MODEL,
-            input=USER_PROMPT.format(obs=obs),
+            input=USER_PROMPT.format(task_description=game_info.get("task_description", ""),
+                            prev_state_str=self.prev_state_str, 
+                            action=self.last_action, 
+                            cur_state_str=cur_state_str),
             instructions=SYSTEM_PROMPT,
             reasoning={
                 "effort": "low",
             }
         )
-        action = response.output_text.strip().lower()
-        if action not in ["left", "right", "up", "down"] and iteration < 3:
-            return self.act(obs, iteration + 1)
-        if iteration >= 3:
-            return "left"
+        action = self._parse_actions(response.output_text.strip())
+        if action not in ["left", "right", "up", "down"]:
+            action = "left" # Fall back to left if the action is not valid
+
+        self.prev_state_str = cur_state_str
+        self.last_action = action
+
         return action
+
+    def _parse_actions(self, output):
+        """
+        Return the full string after ### Actions.
+        """
+        actions_match = re.search(r"### Actions\s*\n(.+)", output, re.IGNORECASE | re.DOTALL)
+        if actions_match:
+            actions_section = actions_match.group(1).strip()
+            return actions_section
+        return ""
