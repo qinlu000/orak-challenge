@@ -11,7 +11,7 @@ We are excited to see the novel approaches and sophisticated strategies that wil
 
 ## 📖 A Quick Refresher: The Orak Challenge
 
-Orak is an open benchmark designed to test agentic LLMs in the complex, dynamic environments of real video games. Your task is to develop a single, MCP-connected agent that processes textual and visual state to act across five iconic titles: **Street Fighter III**, **Super Mario**, **Pokémon**, **StarCraft II**, and **2048**.
+Orak is an open benchmark designed to test agentic LLMs in the complex, dynamic environments of real video games. Your task is to develop a single, MCP-connected agent that processes textual and visual state to act across four iconic titles: **Super Mario**, **Pokémon**, **StarCraft II**, and **2048**.
 
 The challenge moves beyond constrained environments to evaluate an agent's planning, adaptability, and execution in real-world gaming scenarios. For a detailed understanding of the benchmark's design and objectives, we recommend reviewing the [Orak Benchmark Paper](http://arxiv.org/PDF/2506.03610).
 
@@ -102,7 +102,7 @@ cd orak-2025-starter-kit
 With the setup complete, you can now run a full local evaluation using the provided random agent to verify your environment.
 
 ```bash
-diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local
+uv run python run.py --local
 ```
 
 ### Step 3b: Run a Single Game (or Subset of Games) — LOCAL Mode Only
@@ -112,11 +112,10 @@ For faster iteration while developing your agent **in local mode**, you can run 
 ```bash
 # Examples (LOCAL mode)
 uv run python run.py --local --games super_mario
-diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local --games street_fighter
 uv run python run.py --local --games pokemon_red
 
 # You can also run multiple games:
-diambra run --path.roms executables/streetfighter3/roms uv run python run.py --local --games super_mario street_fighter
+uv run python run.py --local --games super_mario pokemon_red
 ```
 
 > Note: The `--games` flag is **only supported with `--local`**. In remote/submission mode, all games are always evaluated.
@@ -127,7 +126,6 @@ Valid game identifiers are:
 - `super_mario`
 - `pokemon_red`
 - `star_craft`
-- `street_fighter`
 
 A successful execution will conclude with an evaluation summary. An example output is shown below:
 
