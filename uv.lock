@@ -590,17 +590,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cython"
-version = "3.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/52/82/01f0b63287cb922e5ba96c5147c30f1e51f541ce91bd178025bb3518b1ba/cython-3.2.0.tar.gz", hash = "sha256:41fdce8237baee2d961c292ed0386903dfe126f131e450a62de0fd7a5280d4b2", size = 3267264, upload-time = "2025-11-05T13:35:04.231Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/2b/904493fceda95747ba83971b40a66c8cc29ff009313429903f38ee620140/cython-3.2.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e9e4b2248dc3a98b86aeba65e9862d2cc881d072c163c0fb31b511d4d72e93c8", size = 2946248, upload-time = "2025-11-05T13:35:30.406Z" },
-    { url = "https://files.pythonhosted.org/packages/dd/6b/9e1e171fe19274465d84dffa4610d46f434b1ae945e946802db396695d67/cython-3.2.0-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:04821ce06598a3aa5c9e0270d98960cfe6556dedbd1418c65e4479162b8ae74a", size = 2869249, upload-time = "2025-11-05T13:36:08.944Z" },
-    { url = "https://files.pythonhosted.org/packages/20/58/1f798ddb7fe6bfddf85f4f97d2d4ad63a491a7b643e85c1e274d0f09138e/cython-3.2.0-py3-none-any.whl", hash = "sha256:73f7f4c75acde5b5b4df05b11fdc2705ec637b99241d1bc2f4ebf345f7a2ea90", size = 1252818, upload-time = "2025-11-05T13:35:00.391Z" },
-]
-
-[[package]]
 name = "dacite"
 version = "1.9.2"
 source = { registry = "https://pypi.org/simple" }
@@ -628,53 +617,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
-]
-
-[[package]]
-name = "diambra"
-version = "0.0.20"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/8f/9274b2e26d5550ac05fee44f54fc23f0a1366032bb8e4ede5a1b6f2cff6d/diambra-0.0.20-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:98533a6897cbb7291c54938ae1d8443022619c06573cf8d6d9f764e395f900b8", size = 10580790, upload-time = "2025-01-24T16:19:59.176Z" },
-    { url = "https://files.pythonhosted.org/packages/60/18/e91b162cf18dba4cb5c8ab2a1474af5f8fa4829b6b4201c4a832fbf13218/diambra-0.0.20-py3-none-macosx_11_0_arm64.whl", hash = "sha256:46c2a6af3040d79cdecacac39c3b84236143408ea50d61cfa5abdfdf2c851ce2", size = 10074746, upload-time = "2025-01-24T16:20:03.128Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/af/3d7c630e6b29896d8986f989be56a350f9047b7dbb4fe3307dc197d9596a/diambra-0.0.20-py3-none-manylinux2014_aarch64.whl", hash = "sha256:19a251c75d2222669c1e27aca82eb9a52c585342c73711b6a2513af103a237d8", size = 9962089, upload-time = "2025-01-24T16:19:59.707Z" },
-    { url = "https://files.pythonhosted.org/packages/ed/05/6d223f939a4c972ee2a8056c4a2f32a491f3bce3867ac30e5bec5d95b2ea/diambra-0.0.20-py3-none-manylinux2014_armv7l.whl", hash = "sha256:7fde2090f879f08b8ad569227557f91efc180a9451194fe043a7560eceff0275", size = 9962088, upload-time = "2025-01-24T16:19:45.011Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/be/db479670e6648e90bd8af90c9bdbde5962b903754d25262fb4d0821734bf/diambra-0.0.20-py3-none-manylinux2014_x86_64.whl", hash = "sha256:d812a3498398bcdb1ef04938ea76add978418b451ef86e0b6772bc49abdc289b", size = 10648562, upload-time = "2025-01-24T16:20:01.824Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/08/f3f2b6672c81bad1c3ee6086284ba45d5e92087467af4efefcb460286339/diambra-0.0.20-py3-none-win_amd64.whl", hash = "sha256:24abff830075fc2bab0a18132d01f514acbf0adc63718b860f80f9632862725f", size = 10902491, upload-time = "2025-01-24T16:20:05.579Z" },
-]
-
-[[package]]
-name = "diambra-arena"
-version = "2.2.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dacite" },
-    { name = "diambra-engine" },
-    { name = "grpcio" },
-    { name = "gymnasium" },
-    { name = "inputs" },
-    { name = "opencv-python" },
-    { name = "screeninfo" },
-    { name = "tk" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/54/d3/85d752212b0a6ff1aa5c419882f883acab8ae547c5c7de00e95bdc2b8fba/diambra_arena-2.2.7.tar.gz", hash = "sha256:4b429228228d0289b68bc2bb08f08538c58e4eee5437a61b86ed345127eaf656", size = 226661, upload-time = "2024-04-30T03:06:55.459Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/c1/2030189a87a25e9d6cd080e159536b8c1364b0ef894ef96467e8d322e7cf/diambra_arena-2.2.7-py3-none-any.whl", hash = "sha256:6d0bf1b8b37e553e23010b251394a9a99154c7b58f49887befb92a8cb8873965", size = 223338, upload-time = "2024-04-30T03:06:53.574Z" },
-]
-
-[[package]]
-name = "diambra-engine"
-version = "2.2.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "grpcio" },
-    { name = "pip" },
-    { name = "protobuf" },
-    { name = "setuptools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/bb/f05e24de73cf8e7b673f69fccc3c85f0b34d9765e4dacd69b0d44b45c985/diambra-engine-2.2.4.tar.gz", hash = "sha256:cadbf5f5c1edc31f20080fb388eba7938113491030a6448eb164b38030f241b4", size = 8695, upload-time = "2024-04-30T19:11:02.821Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/e3/b6c0605dc414ea45d9593c0ae47cb99c07fc634e5b6f3e7a07eca6a7929e/diambra_engine-2.2.4-py3-none-any.whl", hash = "sha256:f0cdacf2bf933ba947d1b872edc7076baf55f9ca7ec9820f075e8673355a6b0c", size = 8534, upload-time = "2024-04-30T19:11:00.404Z" },
 ]
 
 [[package]]
@@ -1198,15 +1140,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/cf/8c/f834fbf984f691b4f7ff60f50b514cc3de5cc08abfc3295564dd89c5e2e7/importlib_resources-6.5.2.tar.gz", hash = "sha256:185f87adef5bcc288449d98fb4fba07cea78bc036455dd44c5fc4a2fe78fed2c", size = 44693, upload-time = "2025-01-03T18:51:56.698Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl", hash = "sha256:789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec", size = 37461, upload-time = "2025-01-03T18:51:54.306Z" },
-]
-
-[[package]]
-name = "inputs"
-version = "0.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/cd/5f434220920f76eb73d19bb7aab8d857445f40aa642718e6e51e850cd663/inputs-0.5.tar.gz", hash = "sha256:a31d5b96a3525f1232f326be9e7ce8ccaf873c6b1fb84d9f3c9bc3d79b23eae4", size = 33393, upload-time = "2018-10-05T22:38:14.206Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/94/040a0d9c81f018c39bd887b7b825013b024deb0a6c795f9524797e2cd41b/inputs-0.5-py2.py3-none-any.whl", hash = "sha256:13f894564e52134cf1e3862b1811da034875eb1f2b62e6021e3776e9669a96ec", size = 33630, upload-time = "2018-10-05T22:38:28.28Z" },
 ]
 
 [[package]]
@@ -2187,8 +2120,6 @@ dependencies = [
     { name = "colorama" },
     { name = "dacite" },
     { name = "dataclass-wizard" },
-    { name = "diambra" },
-    { name = "diambra-arena" },
     { name = "dill" },
     { name = "dxcam" },
     { name = "easyocr" },
@@ -2248,8 +2179,6 @@ requires-dist = [
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dacite", specifier = ">=1.9.2" },
     { name = "dataclass-wizard", specifier = ">=0.35.1" },
-    { name = "diambra", specifier = ">=0.0.20" },
-    { name = "diambra-arena", specifier = ">=2.2.7" },
     { name = "dill", specifier = ">=0.4.0" },
     { name = "dxcam", specifier = ">=0.0.5" },
     { name = "easyocr", specifier = ">=1.7.2" },
@@ -2401,15 +2330,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/20/2e/3434380e8110b76cd9eb00a363c484b050f949b4bbe84ba770bb8508a02c/pillow-12.0.0-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:09f2d0abef9e4e2f349305a4f8cc784a8a6c2f58a8c4892eea13b10a943bd26e", size = 5313505, upload-time = "2025-10-15T18:24:07.137Z" },
     { url = "https://files.pythonhosted.org/packages/57/ca/5a9d38900d9d74785141d6580950fe705de68af735ff6e727cb911b64740/pillow-12.0.0-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bdee52571a343d721fb2eb3b090a82d959ff37fc631e3f70422e0c2e029f3e76", size = 5963654, upload-time = "2025-10-15T18:24:09.579Z" },
     { url = "https://files.pythonhosted.org/packages/95/7e/f896623c3c635a90537ac093c6a618ebe1a90d87206e42309cb5d98a1b9e/pillow-12.0.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:b290fd8aa38422444d4b50d579de197557f182ef1068b75f5aa8558638b8d0a5", size = 6997850, upload-time = "2025-10-15T18:24:11.495Z" },
-]
-
-[[package]]
-name = "pip"
-version = "25.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fe/6e/74a3f0179a4a73a53d66ce57fdb4de0080a8baa1de0063de206d6167acc2/pip-25.3.tar.gz", hash = "sha256:8d0538dbbd7babbd207f261ed969c65de439f6bc9e5dbd3b3b9a77f25d95f343", size = 1803014, upload-time = "2025-10-25T00:55:41.394Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/3c/d717024885424591d5376220b5e836c2d5293ce2011523c9de23ff7bf068/pip-25.3-py3-none-any.whl", hash = "sha256:9655943313a94722b7774661c21049070f6bbb0a1516bf02f7c8d5d9201514cd", size = 1778622, upload-time = "2025-10-25T00:55:39.247Z" },
 ]
 
 [[package]]
@@ -3312,19 +3232,6 @@ wheels = [
 ]
 
 [[package]]
-name = "screeninfo"
-version = "0.8.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cython", marker = "sys_platform == 'darwin'" },
-    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/bb/e69e5e628d43f118e0af4fc063c20058faa8635c95a1296764acc8167e27/screeninfo-0.8.1.tar.gz", hash = "sha256:9983076bcc7e34402a1a9e4d7dabf3729411fd2abb3f3b4be7eba73519cd2ed1", size = 10666, upload-time = "2022-09-09T11:35:23.419Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/bf/c5205d480307bef660e56544b9e3d7ff687da776abb30c9cb3f330887570/screeninfo-0.8.1-py3-none-any.whl", hash = "sha256:e97d6b173856edcfa3bd282f81deb528188aff14b11ec3e195584e7641be733c", size = 12907, upload-time = "2022-09-09T11:35:21.351Z" },
-]
-
-[[package]]
 name = "secretstorage"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3614,15 +3521,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/78/db/a58e09687c1698a7c592e1038e01c206569b86a0377828d51635561f8ebf/tiktoken-0.12.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:508fa71810c0efdcd1b898fda574889ee62852989f7c1667414736bcb2b9a4bd", size = 1195080, upload-time = "2025-10-06T20:21:49.246Z" },
     { url = "https://files.pythonhosted.org/packages/9e/1b/a9e4d2bf91d515c0f74afc526fd773a812232dd6cda33ebea7f531202325/tiktoken-0.12.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:a1af81a6c44f008cba48494089dd98cccb8b313f55e961a52f5b222d1e507967", size = 1255240, upload-time = "2025-10-06T20:21:50.274Z" },
     { url = "https://files.pythonhosted.org/packages/9d/15/963819345f1b1fb0809070a79e9dd96938d4ca41297367d471733e79c76c/tiktoken-0.12.0-cp311-cp311-win_amd64.whl", hash = "sha256:3e68e3e593637b53e56f7237be560f7a394451cb8c11079755e80ae64b9e6def", size = 879422, upload-time = "2025-10-06T20:21:51.734Z" },
-]
-
-[[package]]
-name = "tk"
-version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a0/81/742b342fd642e672fbedecde725ba44db44e800dc4c936216c3c6729885a/tk-0.1.0.tar.gz", hash = "sha256:60bc8923d5d35f67f5c6bd93d4f0c49d2048114ec077768f959aef36d4ed97f8", size = 2247, upload-time = "2019-07-08T06:51:58.051Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/0b/029cbdb868bb555fed99bf6540fff072d500b3f895873709f25084e85e33/tk-0.1.0-py3-none-any.whl", hash = "sha256:703a69ff0d5ba2bd2f7440582ad10160e4a6561595d33457dc6caa79b9bf4930", size = 3879, upload-time = "2019-07-08T06:51:55.175Z" },
 ]
 
 [[package]]

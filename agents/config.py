@@ -9,9 +9,6 @@ from agents.openai_twenty_fourty_eight import OpenAITwentyFourtyEightAgent
 from agents.random_starcraft import RandomStarCraftAgent
 from agents.openai_starcraft import OpenAIStarCraftAgent
 
-from agents.random_street_fighter import RandomStreetFighterAgent
-from agents.openai_street_fighter import OpenAIStreetFighterAgent
-
 PokemonAgent = RandomPokemonAgent
 
 TwentyFourtyEightAgent = OpenAITwentyFourtyEightAgent
@@ -22,6 +19,3 @@ SuperMarioAgent = OpenAIMarioAgent
 
 StarCraftAgent = OpenAIStarCraftAgent
 # StarCraftAgent = RandomStarCraftAgent
-
-StreetFighterAgent = OpenAIStreetFighterAgent
-# StreetFighterAgent = RandomStreetFighterAgent

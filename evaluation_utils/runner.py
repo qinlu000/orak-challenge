@@ -11,14 +11,13 @@ from evaluation_utils.game_server_launcher import GameLauncher
 from evaluation_utils.renderer import Renderer
 from evaluation_utils.sessions import Session
 
-from agents.config import PokemonAgent, TwentyFourtyEightAgent, SuperMarioAgent, StarCraftAgent, StreetFighterAgent
+from agents.config import PokemonAgent, TwentyFourtyEightAgent, SuperMarioAgent, StarCraftAgent
 
 AGENT_MAP = {
     "pokemon_red": PokemonAgent,
     "twenty_fourty_eight": TwentyFourtyEightAgent,
     "super_mario": SuperMarioAgent,
     "star_craft": StarCraftAgent,
-    "street_fighter": StreetFighterAgent,
 }
 
 
