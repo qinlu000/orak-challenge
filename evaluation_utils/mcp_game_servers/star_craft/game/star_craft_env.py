@@ -1,3 +1,4 @@
+import os
 import json
 import time
 from dataclasses import asdict, dataclass, field
@@ -175,9 +176,22 @@ class StarCraftEnv(BaseEnv):
         self.summary = {}
         self.executed_actions = []
 
-        # Use a single multiprocessing context for all sync primitives so they
-        # share the same backend and avoid Manager connection issues.
-        ctx = multiprocessing.get_context()
+        # IMPORTANT:
+        # This env runs inside a gRPC server which has background threads.
+        # Forking a new process from inside a gRPC request handler can deadlock
+        # (and produces logs like: "Other threads are currently calling into gRPC,
+        # skipping fork() handlers"). To avoid the "stuck after reset" hang where
+        # `action_step()` waits forever for `isReadyForNextStep`, we default to a
+        # safer multiprocessing start method.
+        #
+        # Override if you know what you're doing:
+        #   ORAK_STARCRAFT_MP_START_METHOD=spawn|forkserver|fork
+        mp_start_method = os.getenv("ORAK_STARCRAFT_MP_START_METHOD", "spawn")
+        try:
+            ctx = multiprocessing.get_context(mp_start_method)
+        except ValueError:
+            ctx = multiprocessing.get_context()
+        self._mp_ctx = ctx
 
         # Keep a reference to the Manager to prevent garbage collection.
         # Use the Manager only for the shared dict; use a normal Lock so it
@@ -202,6 +216,7 @@ class StarCraftEnv(BaseEnv):
             self.window_capture = wait_for_window("StarCraft II", timeout=60)
 
     def check_process(self, reset=False):
+        ctx = getattr(self, "_mp_ctx", multiprocessing.get_context())
         if self.p is not None:
             if self.p.is_alive():
                 if not self.game_over.value:  # Check if the game is over
@@ -209,13 +224,32 @@ class StarCraftEnv(BaseEnv):
                 self.p.terminate()
             self.p.join()
         if reset:
+            # Clear any latched terminal/ready state from the previous episode so
+            # the next worker process can run and signal steps correctly.
+            try:
+                self.done_event.clear()
+            except Exception:
+                pass
+            try:
+                self.isReadyForNextStep.clear()
+            except Exception:
+                pass
+            try:
+                self.game_end_event.clear()
+            except Exception:
+                pass
+            try:
+                self.game_over.value = False
+            except Exception:
+                pass
+
             self.transaction.update(
                 {'information': {}, 'reward': 0, 'action': None,
                  'done': False, 'result': None, 'iter': 0, 'command': None, "output_command_flag": False,
                  'action_executed': [], 'action_failures': [], })
-            self.game_end_event.clear()  # Clear the game_end_event
             if self.player_race == 'Protoss':
-                self.p = multiprocessing.Process(target=sc2_run_game, args=(
+                # Use the same multiprocessing context as our sync primitives.
+                self.p = ctx.Process(target=sc2_run_game, args=(
                     self.transaction, self.lock, self.isReadyForNextStep, self.game_end_event,
                     self.done_event, self.bot_race, self.bot_difficulty, self.bot_build, self.map_name, self.log_path))
             else:

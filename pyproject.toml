@@ -10,7 +10,6 @@ dependencies = [
     "aiohttp>=3.13.2",
     "anthropic>=0.72.0",
     "backoff>=2.2.1",
-    "burnysc2>=5.0.5",
     "chardet>=5.2.0",
     "colorama>=0.4.6",
     "dacite>=1.9.2",
@@ -18,18 +17,18 @@ dependencies = [
     "dill>=0.4.0",
     "dxcam>=0.0.5",
     "easyocr>=1.7.2",
-    "fastmcp>=2.13.0.2",
     "google-auth>=2.43.0",
     "google-auth-oauthlib>=1.2.2",
     "google-genai>=1.49.0",
     "gym==0.26.2",
     "gym-super-mario-bros>=7.4.0",
     "gymnasium==1.1.1",
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
     "imageio[ffmpeg]>=2.37.2",
     "langchain-chroma>=1.0.0",
     "langchain-openai>=1.0.2",
     "matplotlib>=3.10.7",
-    "mcp[cli]>=1.20.0",
     "mss>=10.1.0",
     "multi-template-matching==1.6.6",
     "nes-py==8.2.1",
@@ -60,6 +59,18 @@ dependencies = [
     "torch>=2.9.0",
     "transformers>=4.57.1",
     "ultralytics>=8.3.225",
+    "burnysc2==7.1.1",
+]
+
+[tool.uv]
+# burnysc2==7.1.1 declares `numpy>=2.0.0`, but this project intentionally pins numpy==1.26.4.
+# `override-dependencies` tells uv to prefer this version even if it would otherwise be considered
+# an invalid resolution, matching pip's "install anyway" behavior.
+override-dependencies = [
+    "numpy==1.26.4",
+    # burnysc2==7.1.1 declares `protobuf<4.0.0` but other dependencies (e.g. grpcio-tools) require
+    # newer protobuf releases. We intentionally prefer a modern protobuf here.
+    "protobuf==6.33.2",
 ]
 
 [tool.uv.sources]

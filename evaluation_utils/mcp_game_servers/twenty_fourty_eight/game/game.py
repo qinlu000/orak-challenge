@@ -2,12 +2,16 @@ import json
 import sys
 import time
 from copy import deepcopy
+import os
+
+# Set SDL to use dummy video driver for headless operation
+# This must be set before pygame is imported to avoid macOS main thread issues
+os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 
 import pygame
 from pygame.locals import *
 
 from mcp_game_servers.twenty_fourty_eight.game.logic import *
-import os
 import yaml
 
 base_dir = os.path.dirname(os.path.abspath(__file__))

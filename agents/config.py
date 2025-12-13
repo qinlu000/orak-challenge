@@ -7,15 +7,15 @@ from agents.random_twenty_fourty_eight import RandomTwentyFourtyEightAgent
 from agents.openai_twenty_fourty_eight import OpenAITwentyFourtyEightAgent
 
 from agents.random_starcraft import RandomStarCraftAgent
-from agents.openai_starcraft import OpenAIStarCraftAgent
+# from agents.openai_starcraft import OpenAIStarCraftAgent
 
 PokemonAgent = RandomPokemonAgent
 
-TwentyFourtyEightAgent = OpenAITwentyFourtyEightAgent
-# TwentyFourtyEightAgent = RandomTwentyFourtyEightAgent
+# TwentyFourtyEightAgent = OpenAITwentyFourtyEightAgent
+TwentyFourtyEightAgent = RandomTwentyFourtyEightAgent
 
-SuperMarioAgent = OpenAIMarioAgent
-# SuperMarioAgent = RandomMarioAgent
+# SuperMarioAgent = OpenAIMarioAgent
+SuperMarioAgent = RandomMarioAgent
 
-StarCraftAgent = OpenAIStarCraftAgent
-# StarCraftAgent = RandomStarCraftAgent
+# StarCraftAgent = OpenAIStarCraftAgent
+StarCraftAgent = RandomStarCraftAgent
