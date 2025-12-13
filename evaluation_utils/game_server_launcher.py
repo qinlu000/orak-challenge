@@ -81,7 +81,9 @@ class GameLauncher:
 
         for game_name in game_list:
             self.launch_game_server(game_name)
-            time.sleep(0.5)
+            # Avoid long per-game delays; servers should come up in parallel.
+            # A tiny stagger helps prevent resource spikes on some systems.
+            time.sleep(0.05)
 
         time.sleep(1.5)
         self.renderer.event("All game servers launched successfully")

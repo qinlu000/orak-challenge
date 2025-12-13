@@ -3,6 +3,7 @@ import os
 import time
 import json
 import backoff
+from typing import Any
 
 # from evaluation_utils.sessions import Session
 from evaluation_utils.game_env import GameEnv
@@ -28,9 +29,13 @@ class Runner:
         local: bool = False,
         renderer: Renderer | None = None,
         games: list[str] | None = None,
+        grpc_host: str = "localhost",
+        grpc_ports: dict[str, int] | None = None,
+        manage_local_game_servers: bool = True,
     ):
         self.local = local
         self.renderer = renderer
+        self.manage_local_game_servers = manage_local_game_servers
 
         # Determine which games to run
         if self.local:
@@ -52,9 +57,16 @@ class Runner:
         self._should_delete_session_file = False
 
         if self.local:
-            self.renderer.event("Running in LOCAL mode")
-            self.mcp_urls = {game: f"http://localhost:{GAME_SERVER_PORTS[game]}/mcp" for game in self.games}
-            self.game_launcher = GameLauncher(renderer, games=self.games)
+            mode_suffix = " (managing servers)" if self.manage_local_game_servers else " (attach mode)"
+            self.renderer.event(f"Running in LOCAL mode{mode_suffix}")
+
+            ports = grpc_ports or GAME_SERVER_PORTS
+            missing = [g for g in self.games if g not in ports]
+            if missing:
+                raise ValueError(f"Missing port(s) for game(s): {', '.join(missing)}")
+
+            self.grpc_addresses = {game: f"{grpc_host}:{ports[game]}" for game in self.games}
+            self.game_launcher = GameLauncher(renderer, games=self.games) if self.manage_local_game_servers else None
         else:
             self.renderer.event("Running in REMOTE mode")
             self.session = Session(session_id=session_id, renderer=self.renderer)
@@ -112,8 +124,9 @@ class Runner:
     
     async def evaluate_all_games(self):
         if self.local:
-            # Only start the subset of games selected for this run
-            self.game_launcher.start_game_servers(self.games)
+            # Only start the subset of games selected for this run (unless attaching)
+            if self.manage_local_game_servers and self.game_launcher is not None:
+                self.game_launcher.start_game_servers(self.games)
             # self.renderer.event("Waiting for game servers to be ready...")
 
         self.renderer.event(f"Starting parallel evaluation of {len(self.scores)} games")
@@ -130,14 +143,28 @@ class Runner:
             raise
         finally:
             if self.local:
-                self.renderer.event("Stopping all game servers...")
-                self.game_launcher.force_stop_all_games()
+                if self.manage_local_game_servers and self.game_launcher is not None:
+                    self.renderer.event("Stopping all game servers...")
+                    self.game_launcher.force_stop_all_games()
             self._cleanup_session_file(all_games_succeeded)
 
     @backoff.on_exception(backoff.constant, Exception, max_time=3000, max_tries=300, interval=10)
-    async def wait_for_client_connect(self, env: GameEnv):
-        async with env.client:
-            await env.wait_for_ping()
+    def wait_for_client_connect(self, env: GameEnv):
+        """Establish connection and register session with the game server."""
+        env.connect()
+
+    async def _wait_for_client_connect_async(self, env: GameEnv) -> None:
+        """
+        Async wrapper for session registration.
+
+        GameEnv.connect() and its retry/backoff logic are synchronous and can block;
+        running it in a worker thread allows other games to progress concurrently.
+        """
+        await asyncio.to_thread(self.wait_for_client_connect, env)
+
+    async def _call_in_thread(self, fn, *args, **kwargs) -> Any:
+        """Run a blocking callable in a worker thread and yield control to the event loop."""
+        return await asyncio.to_thread(fn, *args, **kwargs)
 
     async def start_game(self, game_name: str):
         self.renderer.set_server_status(game_name, "launching")
@@ -146,22 +173,19 @@ class Runner:
         self.renderer.event(f"{game_display_name}: Initializing agent")
 
         if self.local:
-            mcp_url = self.mcp_urls[game_name]
+            grpc_address = self.grpc_addresses[game_name]
         else:
-            mcp_url = self.session.get()["mcp_urls"][game_name]
+            grpc_address = self.session.get()["grpc_addresses"][game_name]
         agent = AGENT_MAP[game_name]()
-        env = GameEnv(mcp_url)
+        env = GameEnv(grpc_address)
 
-        self.renderer.event(f"{game_display_name}: Waiting for client to connect...")    
-        await self.wait_for_client_connect(env)
+        self.renderer.event(f"{game_display_name}: Waiting for client to connect...")
+        await self._wait_for_client_connect_async(env)
         self.renderer.event(f"{game_display_name}: Connected successfully, starting game loop")
         self.renderer.set_server_status(game_name, "running")
 
-        async with env.client:
+        try:
             self.renderer.start_game_timer(game_name)
-
-            # wait for game using async sleep
-            # await asyncio.sleep(60)
 
             # Prepare per-iteration state logging
             game_data_dir = os.path.join(GAME_DATA_DIR, game_name)
@@ -169,7 +193,7 @@ class Runner:
             game_states_path = os.path.join(game_data_dir, "game_states.jsonl")
             states_f = open(game_states_path, "a", encoding="utf-8")
 
-            game_config = await env.get_game_config()
+            game_config = await self._call_in_thread(env.get_game_config)
             max_episodes = game_config.get("max_episodes")
 
             try:
@@ -179,9 +203,9 @@ class Runner:
                 avg_score = 0
                 while episode < max_episodes:
                     iteration += 1
-                    obs = await env.load_obs()
-                    action = agent.act(obs)
-                    result = await env.dispatch_final_action(action)
+                    obs = await self._call_in_thread(env.load_obs)
+                    action = await self._call_in_thread(agent.act, obs)
+                    result = await self._call_in_thread(env.dispatch_final_action, action)
                     finished = bool(result.get("is_finished"))
                     current_score = result.get("score", 0)
                     avg_score = result.get("avg_score", 0)
@@ -208,9 +232,12 @@ class Runner:
                     self.renderer.event(f"{game_display_name}: Step {iteration}, Episode: {episode+1}, Score: {current_score}")
 
                     if finished:
+                        steps_this_episode = iteration
                         episode += 1
                         iteration = 0
-                        self.renderer.event(f"{game_display_name}: Game finished after {iteration} steps with final score: {current_score}")
+                        self.renderer.event(
+                            f"{game_display_name}: Game finished after {steps_this_episode} steps with final score: {current_score}"
+                        )
                         if episode < max_episodes:
                             self.renderer.event(f"{game_display_name}: Starting new episode... ({episode+1}/{max_episodes})")
                         else:
@@ -227,6 +254,8 @@ class Runner:
                     states_f.close()
                 except Exception:
                     pass
+        finally:
+            await self._call_in_thread(env.close)
 
     def _cleanup_session_file(self, all_games_succeeded: bool):
         if (

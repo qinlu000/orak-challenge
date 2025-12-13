@@ -1,4 +1,5 @@
 import sys
+import os
 import os.path
 import json
 import time
@@ -212,7 +213,8 @@ class SuperMarioEnv(BaseEnv):
         self.log_path = self.cfg.log_path
 
         # game setup
-        self.env = gym_super_mario_bros.make('SuperMarioBros-1-1-v1', render_mode='human', apply_api_compatibility=True)
+        # Use rgb_array for headless operation - avoids pygame main thread issues
+        self.env = gym_super_mario_bros.make('SuperMarioBros-1-1-v1', render_mode='rgb_array', apply_api_compatibility=True)
 
         self.env = JoypadSpace(
             self.env,

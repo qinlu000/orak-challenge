@@ -1,31 +1,27 @@
+import os
+import sys
 import argparse
-import asyncio
-from mcp_game_servers.base_server import *
-from mcp.server.fastmcp import FastMCP
 
-async def main():
-    await server.run()
+# Setup paths - go up to the project root
+app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, app_dir)
 
-server = FastMCP("game-server", port=int(os.getenv("PORT", "33000")), host=os.getenv("HOST", "0.0.0.0"))
+from evaluation_utils.grpc_server import serve
+from evaluation_utils.mcp_game_servers.base_game_logic import GameLogic
 
-if __name__ == "__main__":
-    default_config_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "config.yaml"
-    )
-
-    # Define argparse arguments
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config",
-        type=str,
-        default=default_config_path,
-    )
+    parser.add_argument("--config", type=str, default=None)
     args = parser.parse_args()
 
-    server = MCPGameServer(
-        server,
-        args.config,
-        expand_log_path=False if args.config != default_config_path else True
+    port = int(os.getenv("PORT", "33000"))  # Pokemon Red default port
+    config_path = args.config or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config.yaml"
     )
-    asyncio.run(main())
+
+    game = GameLogic(config_path)
+    print(f"Starting Pokemon Red gRPC server on port {port}")
+    serve(game, port)
+
+if __name__ == "__main__":
+    main()
