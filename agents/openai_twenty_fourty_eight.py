@@ -54,7 +54,7 @@ Provide your response in the strict format:
 <direction>
 """
 
-MODEL = "gpt-5-nano"
+MODEL = "openai/gpt-4o-mini"
 
 class OpenAITwentyFourtyEightAgent:
     TRACK = "TRACK1"

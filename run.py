@@ -1,5 +1,13 @@
+import os
 import asyncio
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (explicit path)
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(env_path)
 import argparse
+import sys
 
 from evaluation_utils.runner import Runner
 from evaluation_utils.commons import setup_logging, GAME_DATA_DIR, GAME_SERVER_PORTS

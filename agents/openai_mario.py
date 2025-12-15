@@ -311,7 +311,7 @@ ACTION_INFERENCE_USER_PROMPT = """
 {cur_state_str}
 """
 
-MODEL = "gpt-5-nano"
+MODEL = "openai/gpt-4o-mini"
 
 class OpenAIMarioAgent:
     TRACK = "TRACK1"

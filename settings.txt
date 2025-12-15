@@ -1,0 +1,11 @@
+EnvironmentSettings(game_id='sfiii3n', frame_shape=(0, 0, 0), step_ratio=6, disable_keyboard=True, disable_joystick=True, render_mode='rgb_array', splash_screen=True, rank=0, env_address='127.0.0.1:55001', grpc_timeout=600, seed=1765335265, difficulty=1, continue_game=0.0, show_final=False, tower=3, _last_seed=1765335265, pb_model=game_id: "sfiii3n"
+frame_shape {
+}
+step_ratio: 6
+n_players: 1
+disable_keyboard: true
+disable_joystick: true
+action_spaces: DISCRETE
+episode_settings {
+}
+, n_players=1, action_space=1, role=None, characters='Ken', outfits=1, super_art=None, fighting_style=None, ultimate_style=None, speed_mode=None)
