@@ -190,7 +190,7 @@ class SuperMarioObs(Obs):
         return observation
 
     def evaluate(self):
-        return int(self.reward['distance']), self.reward['done']
+        return int(self.reward['distance']) / 3161.0, self.reward['done']
 
 @dataclass
 class SuperMarioAction(Action):

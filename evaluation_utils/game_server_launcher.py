@@ -89,16 +89,40 @@ class GameLauncher:
         self.renderer.event("All game servers launched successfully")
     
     def clean_up_game_server(self, game_name: str):
-        if os.path.exists(os.path.join(GAME_DATA_DIR, game_name, "game_results.json")):
-            
-            self.game_servers_procs[game_name].terminate()
-            self.game_servers_procs[game_name].wait()
-            
-            del self.game_servers_procs[game_name]
-            
-            if game_name in self.output_files:
-                self.output_files[game_name].close()
-                del self.output_files[game_name]
+        """
+        Terminate a game server process and close any associated resources.
+
+        Important: cleanup must NOT depend on the existence of game_results.json.
+        Servers can crash or runs can be interrupted before results are written,
+        and we still need to ensure processes and file handles are released.
+        """
+        proc = self.game_servers_procs.get(game_name)
+        if proc is not None:
+            try:
+                # If still running, try graceful terminate first, then hard kill.
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=5)
+                else:
+                    # Reap process if already exited.
+                    try:
+                        proc.wait(timeout=0.2)
+                    except Exception:
+                        pass
+            finally:
+                # Always remove the proc entry even if terminate/kill raised.
+                self.game_servers_procs.pop(game_name, None)
+
+        f = self.output_files.pop(game_name, None)
+        if f is not None:
+            try:
+                f.close()
+            except Exception:
+                pass
     
     def stop_game_server(self, game_name: str, silent: bool = False):
         if game_name in self.game_servers_procs:
@@ -124,7 +148,8 @@ class GameLauncher:
 
         while len(completed_games) < total_games:
             time.sleep(10)
-            for game_name, proc in self.game_servers_procs.items():
+            # Iterate over a snapshot in case we stop/cleanup while iterating.
+            for game_name, proc in list(self.game_servers_procs.items()):
                 if game_name in completed_games:
                     continue
 
@@ -132,6 +157,13 @@ class GameLauncher:
                 return_code = proc.poll()
 
                 if return_code is not None:
+                    # If the process exited cleanly, allow a small grace period for the
+                    # results file to appear (avoid false "crash" on delayed writes).
+                    if return_code == 0 and not os.path.exists(results_path):
+                        grace_deadline = time.time() + 2.0
+                        while time.time() < grace_deadline and not os.path.exists(results_path):
+                            time.sleep(0.1)
+
                     if return_code != 0 or not os.path.exists(results_path):
                         self.renderer.warn(f"Game server {game_name} crashed with return code {return_code}")
                         self.renderer.set_server_status(game_name, "failed")

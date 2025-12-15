@@ -15,6 +15,7 @@ Key characteristics:
 - Clean separation of game logic from server protocol
 """
 
+import json
 import os
 import logging
 from datetime import datetime
@@ -22,9 +23,10 @@ from typing import Tuple
 from io import BytesIO
 import omegaconf
 from PIL import Image
+import time
 
 from mcp_game_servers.utils.module_creator import EnvCreator
-from evaluation_utils.commons import GAME_DATA_DIR, MAX_STEPS, MAX_EPISODES, setup_logging
+from evaluation_utils.commons import GAME_DATA_DIR, MAX_STEPS, MAX_EPISODES, setup_logging, GAME_RESULTS_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +83,8 @@ class GameLogic:
         self._episodes = 0
         self._max_steps = MAX_STEPS[GAME_ID]
         self._current_step = 0
+        self._start_time = time.time()
+        self._end_time = None
 
         # Latched final observation logic
         # When all episodes are finished, we latch the final observation
@@ -217,9 +221,22 @@ class GameLogic:
                     pre_step_game_info
                 )
                 self._latched_final_result = (score, is_finished, max_episodes_reached)
+                self.log_game_results()
                 logger.info(f"Max episodes ({MAX_EPISODES}) reached. Latching final observation.")
 
         return score, is_finished, max_episodes_reached
+
+    def log_game_results(self):
+        self._end_time = time.time()
+        with open(GAME_RESULTS_PATH, "w") as fp:
+            json.dump({
+                "score": self._score,
+                "avg_score": (self._total_score / self._episodes) if self._episodes > 0 else 0,
+                "start_time": self._start_time,
+                "end_time": self._end_time,
+                "game_info": self.env.get_game_info()
+            }, fp)
+
 
     def get_game_config(self) -> dict:
         """

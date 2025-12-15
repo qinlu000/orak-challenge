@@ -366,9 +366,9 @@ class StarCraftEnv(BaseEnv):
         result = self.transaction['result']
         if result is None:
             return 0, self.transaction['done']
-        if result.name == "defeat":
-            return 0, self.transaction['done']
-        return 1, self.transaction['done']
+        if result.name.lower() == "victory":
+            return 1, self.transaction['done']
+        return 0, self.transaction['done']
 
     def get_game_info(self) -> dict:
         return {
